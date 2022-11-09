@@ -1,0 +1,30 @@
+{
+    "id": "757D0B0A",
+    "path": "~/Documents/runTrack/R/report.Rmd",
+    "project_path": "R/report.Rmd",
+    "type": "r_markdown",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1668007621110.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "tempName": "Untitled1",
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "113,50",
+        "scrollLine": "104",
+        "marks": "<:50,0\n>:50,0",
+        "last_setup_crc32": "9BBA002E7f3cf089"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1668010835,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1668010835218,
+    "read_only": false,
+    "read_only_alternatives": []
+}

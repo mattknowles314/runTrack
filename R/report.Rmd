@@ -1,0 +1,126 @@
+---
+title: "Matt's Run Training Analysis"
+author: "Matthew Knowles"
+date: Early November 2022
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(ggcorrplot)
+library(ggplot2)
+library(tidyr)
+
+activities <- read.csv("../Data/Activities.csv", header = TRUE)
+
+# Separate "Time" into component parts - converting to integers
+activities_tidy <- separate(activities, Time, into = (c("minute", "second", "centisecond")), convert = TRUE)
+## Warning: Too few values at 2 locations: 57, 110
+# Calculate total minutes, if first character is less than 5, treat as an hour unit, else, assume it's in minutes
+activities_tidy$total_mins <- ifelse((activities_tidy$minute < 5), 
+                                   activities_tidy$minute * 60 + activities_tidy$second,
+                                   activities_tidy$minute)
+
+# Calculate VO2 Max per https://www.fetcheveryone.com/forum__58727__how_does_garmin_connect_calculate_vo2_max
+# calculate meters per minute
+activities_tidy$mpm <- (activities_tidy$Distance*1000)/activities_tidy$total_mins
+
+# calculate VO2
+activities_tidy$vo2 <- -4.6 + 0.182*activities_tidy$mpm + 0.000104*activities_tidy$mpm^2
+
+# calculate % VO2 Max
+activities_tidy$percentVO2 <- (activities_tidy$Avg.HR/activities_tidy$Max.HR - 0.37)/0.64
+
+# calculate VO2 Max in ml/min/kg
+activities_tidy$vo2max <- activities_tidy$vo2/activities_tidy$percentVO2
+
+
+
+```
+
+# Introduction
+
+I am not a sports scientist, but I am a statistician, and pretty good at R. I keep track of all my biometrics, I log all my runs on Garmin and Strava. But I want to dive a bit deeper. What can I learn from this data that Strava and Garmin aren't telling me?
+
+This page allows for me (and, you too I guess) to get a bit of an ideda about how I can improve, and what to avoid.
+
+# Vistaul Inspection
+
+```{r, echo = FALSE, warning = FALSE}
+gg0 <- list()
+gg0[[1]] <- ggplot(data = activities, aes(x = Avg.HR, y = Aerobic.TE)) +
+  geom_point() + 
+  stat_smooth(formula = y ~ x)
+
+gg0[[2]] <- ggplot(data = activities_tidy %>% filter(Activity.Type == "Running"), aes(x = Avg.HR, y = vo2max)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x) 
+
+gg0[[3]] <- ggplot(data = activities, aes(x = Avg.HR, y = ..density..)) +
+  geom_density()
+
+gg0[[4]] <- ggplot(data = activities_tidy %>% filter(Activity.Type == "Running"), aes(x = Distance, y = vo2max)) + 
+  geom_point() +
+  stat_smooth(formula = y ~ x)
+
+gg0[[5]] <- ggplot(data = activities_tidy %>% filter(Activity.Type == "Running"), aes(x = Distance, y = Aerobic.TE)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x)
+
+headings <- c("Aerobic Training Effect vs Average HR", "VO2Max vs Average HR", "Average HR Density", "Distance vs VO2Max", "Aerobic Training Effect vs Distance")
+```
+
+Below are five plots that give some insights into my fitness and training. We can draw a few conclusions from them that will enable the next phase of training to be targeted, and set through goals and emperical evidence, rather than feeling.
+
+## Plots {.tabset}
+```{r, results = "asis", echo = FALSE, warning = FALSE}
+for (i in 1:length(gg0)) {
+    cat("### ",headings[i],"\n")
+    print(gg0[[i]])
+    cat('\n\n')
+}
+## {-}
+```
+
+The key takeaways from these graphs can be summarised:
+
+- Aerobic Training effect drops off after around 165BPM
+- VO2max and average heartrate are somewhat negatively related
+- Heartrate is centred around 165, which means I'm eitther training in the right 
+  zones already, or simply not spending much time above it
+- The peak distance for VO2max seems to be around 4km, but my guess is that this is due to limited time spent at the longer distances, as at the minute I'm still in a base-building phase of training.
+- Aerobic training effect starts to curve off quite dramatically after 10km, but I think
+this is primarily due to not many runs being done at these longer distances. 
+
+## Correlation between the factors
+
+```{r, echo = FALSE, warning = FALSE}
+nums <- sapply(activities_tidy, is.numeric)
+corr <- round(cor(activities_tidy[,nums], use = "pairwise.complete.obs"), 1)
+ggcorrplot(corr, lab = T, lab_size = 3, method = "circle", colors = c("tomato2", "white", "springgreen3"))
+
+```
+
+Some of these correlations will be superficial of course, such as total mins and distancee being perfectly correlated. But we can see a few interesting things.
+
+- Aerobic training effect and distance are heavilty correlated, but there are no other significant correlations to be drawn from here.
+- VO2max is correlated hevily with stride length and cadence, which is interesting to note. Easy runs are important, but too easy can be detrimental. 
+
+# Takeaways for next training block
+
+- Spend time around 165HR, going above it is okay for speedwork, but after that it becomes lactic.
+- Start building up the distance week in week out.
+
+
+
+
+
+
+
+
+
+
+
+
